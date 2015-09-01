@@ -24,7 +24,7 @@ func centering(s string, w int) string {
 	}
 	s1 := (w - l) / 2
 	s2 := w - (l + s1)
-	return strings.Repeat(" ", s2) + s + strings.Repeat(" ", s1)
+	return strings.Repeat(" ", s1) + s + strings.Repeat(" ", s2)
 }
 
 func is_include(a string, list []string) bool {
@@ -34,6 +34,45 @@ func is_include(a string, list []string) bool {
 		}
 	}
 	return false
+}
+
+func mkbuf() []string {
+	// return make([]string, 0, 7)
+	return []string{"  ", "  ", "  ", "  ", "  ", "  ", "  "}
+}
+
+func index(d time.Time) int {
+	return int((d.Weekday() + 6) % 7)
+}
+
+func firstDay(year int, month time.Month) time.Time {
+	return time.Date(year, month, 1, 0, 0, 0, 0, time.Local)
+}
+
+func build_cal2(year int, month time.Month, holiday []string) []string {
+	today_y, today_m, today_d := time.Now().Date()
+	var buf []string
+	buf = append(buf, centering(fmt.Sprintf("%v %d", month, year), 20))
+	buf = append(buf, "Mo Tu We Th Fr Sa Su")
+	s := mkbuf()
+	for d := firstDay(year, month); d.Month() == month; d = d.AddDate(0, 0, 1) {
+		i := (d.Weekday() + 6) % 7
+		s[i] = fmt.Sprintf("%2d", d.Day())
+		if d.Weekday() == 6 || d.Weekday() == 0 || is_include(fmt.Sprintf("%4d-%.2d-%.2d", year, month, d.Day()), holiday) {
+			s[i] = bright(s[i])
+		}
+		if today_y == year && today_m == month && today_d == d.Day() {
+			s[i] = reverse(s[i])
+		}
+		if d.Weekday() == 0 {
+			buf = append(buf, strings.Join(s, " "))
+			s = mkbuf()
+		}
+	}
+	if len(s) > 0 {
+		buf = append(buf, strings.Join(s, " "))
+	}
+	return buf
 }
 
 func build_cal(year int, month time.Month, label bool, holiday []string) []string {
@@ -105,7 +144,8 @@ func main() {
 	cur := time.Now().AddDate(0, -1, 0)
 	for i := 0; i < 3; i++ {
 		y, m, _ := cur.Date()
-		buf[i] = build_cal(y, m, true, holiday)
+		// buf[i] = build_cal(y, m, true, holiday)
+		buf[i] = build_cal2(y, m, holiday)
 		cur = cur.AddDate(0, 1, 0)
 	}
 
